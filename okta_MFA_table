@@ -1,0 +1,15 @@
+`okta` ((eventType="user.authentication.auth_via_mfa" AND debugContext.debugData.factor="OKTA_VERIFY_PUSH") OR eventType="system.push.send_factor_verify_push" OR eventType="user.mfa.okta_verify.deny_push") 
+| eval user=coalesce('actor.alternateId',user), actual_time = _time
+| bin _time span=5m 
+| stats count(eval(eventType="user.authentication.auth_via_mfa")) as successes count(eval(eventType="user.mfa.okta_verify.deny_push")) as denies count(eval(eventType="system.push.send_factor_verify_push")) as pushes min(actual_time) as earliest max(actual_time) as latest by user,_time 
+| transaction user maxspan=10m
+| streamstats window=1 sum(denies) as denies sum(pushes) as pushes sum(successes) as successes min(earliest) as earliest max(latest) as latest by user
+| eval duration = latest - earliest
+| search (pushes>=1)
+| eval firsttime=strftime(earliest, "%c"),lasttime=strftime(latest, "%c")
+| eval totalattempts=successes+denies
+| eval suspicious_ratio=pushes/successes
+| eval finding="Probable normal authentication pattern"
+| eval finding=if(denies==pushes AND pushes>1,"Authentication attempts not successful because multiple pushes denied",finding)
+| eval finding=if(totalattempts==0 AND pushes>1,"Multiple pushes sent and never responded to",finding)
+| eval finding=if(successes>0 AND suspicious_ratio>2,"INVESTIGATE: Multiple pushes sent, eventual successful authentication!",finding)
