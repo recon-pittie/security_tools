@@ -1,0 +1,14 @@
+`okta`
+```query privileged or VAP users taking action```
+| search (actor.alternateId IN ("user_id")) OR ("target{}.alternateId" IN ("user_id"))
+```query events of security interest```
+| search displayMessage IN ("Account Locked from New Devices - Max sign-in attempts exceeded.", "Attempt bypass of factor", "Auto-unlock user account for Okta", "Deny user access due to app sign on policy", "Invalid self service recovery token used by user", "Issued recovery token for self-service account unlock", "Max sign in attempts exceeded", "Perform unlock user account by AD agent", "Perform user password reset by AD agent", "Request from suspicious actor", "Reset all factors for user", "Reset factor for user", "Send self-service account unlock SMS message", "Send self-service account unlock email", "Send self-service password reset SMS message", "Send self-service password reset email", "Send user MFA reset notification email", "The user has been locked out 10 times in a row without a successful login. The account will no longer be automatically unlocked by Okta.", "User account unlock by admin", "User attempted unauthorized access to app", "User rejected Okta push verify", "User report suspicious activity", "User secondary email updated")
+```build table then sort```
+| eval Time = strftime(_time, "%m/%d/%Y %H:%M:%S")
+| rename actor.displayName as Subject_Account
+| rename target{}.displayName as Object_Account
+| rename displayMessage as Activity
+| rename outcome.result as Result
+| rename severity as Severity
+| table Subject_Account, Object_Account, Activity, Result, Severity, Time
+| sort -Time, Severity
