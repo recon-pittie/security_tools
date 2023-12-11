@@ -1,0 +1,29 @@
+$src_path = "C:\temp\Hash_list.csv"
+$inexist = Test-path $src_path
+
+#look for CSV formated input file
+if ($inexist -eq $false)
+    {echo "File Not Found"
+    exit
+    } 
+
+ $listing = Import-CSV $src_path
+
+#For each line of the file, query to see if the hash is already in list.
+#if the hash exists, do nothing (it used to log, but commented out now)
+#if the hash does not exist, output the hash
+foreach($line in $listing)
+    {
+    $hashid = $null
+    $hashval = $line.SHA256HashData
+    $hashid = Get-FalconIOC -Filter "value: '$hashval'"
+    if ($hashid -ne $null)
+        {
+        ##echo "IN LIST  $hashval"
+        }
+    else 
+        {
+        ##echo "NOT IN LIST $hashval"
+        echo $hashval
+        }
+} 
