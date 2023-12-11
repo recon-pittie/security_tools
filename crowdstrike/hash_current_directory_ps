@@ -1,0 +1,12 @@
+Param(
+    [Parameter(Position=0)]
+    [String[]]
+    $filepath
+)
+
+
+Get-ChildItem –Path $filepath -Recurse |
+
+Foreach-Object {
+Get-FileHash -path $_.FullName
+} 
