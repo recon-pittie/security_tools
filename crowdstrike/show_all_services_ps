@@ -1,0 +1,24 @@
+#Log File Creation Function
+Function Create-Log()
+{    
+    #Log File Creation
+    $date = Get-Date 
+    $path = "c:\Logging\CS"
+    $exist = Test-Path "c:\Logging\CS" 
+    if ($exist -eq $false){
+
+    New-Item -ItemType Directory -Path $path | Out-Null
+    Write-Output "$date" | Out-File -FilePath "c:\Logging\CS\Crowdstrike-Services.log" -Force 
+    }
+    else{
+    Write-Output "$date" | Out-File -FilePath "c:\Logging\CS\Crowdstrike-Services.log" -Force -Append
+    }
+ }
+
+Create-Log
+#Output to a file
+Get-Service | Out-File -FilePath "c:\Logging\CS\Crowdstrike-Services.log" -Force -Append
+#Display output to screen
+Get-Content -Path "c:\Logging\CS\Crowdstrike-Services.log"
+#remove the log file for tidyness
+Remove-Item -Path "c:\Logging\CS\Crowdstrike-Services.log"
