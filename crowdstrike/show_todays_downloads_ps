@@ -1,0 +1,26 @@
+# Specify the target date in the format "YYYY-MM-DD"
+$targetDate = "YYYY-MM-DD"
+
+# Get the path to the user's Downloads folder
+$downloadsPath = [System.IO.Path]::Combine($env:USERPROFILE, "Downloads")
+
+# Check if the Downloads folder exists
+if (Test-Path $downloadsPath -PathType Container) {
+    # Get all files in the Downloads folder
+    $files = Get-ChildItem $downloadsPath
+
+    # Filter files based on the specified date
+    $filteredFiles = $files | Where-Object { $_.CreationTime.Date -eq $targetDate }
+
+    # Display the results
+    if ($filteredFiles.Count -gt 0) {
+        Write-Host "Files in Downloads folder created on $targetDate."
+        foreach ($file in $filteredFiles) {
+            Write-Host "  $($file.Name)"
+        }
+    } else {
+        Write-Host "No files found in Downloads folder created on $targetDate."
+    }
+} else {
+    Write-Host "Downloads folder not found."
+}
