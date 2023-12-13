@@ -1,0 +1,30 @@
+# Prompt the user to enter the target date
+$targetDate = Read-Host "Enter the target date (YYYY-MM-DD):"
+
+# Validate the date format
+if (-not ($targetDate -match '^\d{4}-\d{2}-\d{2}$')) {
+    Write-Host "Invalid date format. Please use the format YYYY-MM-DD."
+    exit
+}
+
+# Get the path to the user's profile folder
+$userProfilePath = $env:USERPROFILE
+
+# Recursively get all directories under the user's profile folder
+$allDirectories = Get-ChildItem $userProfilePath -Directory -Recurse
+
+foreach ($directory in $allDirectories) {
+    # Get all files in the directory
+    $files = Get-ChildItem $directory.FullName
+
+    # Filter files based on the specified date
+    $filteredFiles = $files | Where-Object { $_.CreationTime.Date -eq $targetDate }
+
+    # Display the results for the current directory
+    if ($filteredFiles.Count -gt 0) {
+        Write-Host "Files in $($directory.FullName) downloaded on $targetDate."
+        foreach ($file in $filteredFiles) {
+            Write-Host "  $($file.FullName)"
+        }
+    }
+}
