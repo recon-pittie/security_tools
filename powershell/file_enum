@@ -1,0 +1,63 @@
+# Display a custom banner
+$banner = @"
+ ______  __   __       ______       ______   __   __   __  __   __    __    
+/\  ___\/\ \ /\ \     /\  ___\     /\  ___\ /\ "-.\ \ /\ \/\ \ /\ "-./  \   
+\ \  __\\ \ \\ \ \____\ \  __\     \ \  __\ \ \ \-.  \\ \ \_\ \\ \ \-./\ \  
+ \ \_\   \ \_\\ \_____\\ \_____\    \ \_____\\ \_\\"\_\\ \_____\\ \_\ \ \_\ 
+  \/_/    \/_/ \/_____/ \/_____/     \/_____/ \/_/ \/_/ \/_____/ \/_/  \/_/ 
+"@
+Write-Host $banner
+
+# Get the path to the user's profile folder
+$userProfilePath = $env:USERPROFILE
+
+# Define potentially malicious file extensions
+$maliciousExtensions = @(".exe", ".bat", ".cmd", ".js", ".vbs", ".ps1", ".psm1", ".psd1", ".jar", ".com", ".scr", ".msi", ".hta")
+
+# Recursively get all directories under the user's profile folder
+$allDirectories = Get-ChildItem $userProfilePath -Directory -Recurse
+
+# Initialize a list to store malicious files
+$maliciousFilesList = @()
+
+# Display loading message
+Write-Host "Scanning for suspicious files. Please wait..."
+
+# Display progress bar
+$progressCounter = 0
+$totalItems = $allDirectories.Count
+
+foreach ($directory in $allDirectories) {
+    $progressCounter++
+    $progressPercentage = ($progressCounter / $totalItems) * 100
+    Write-Progress -Activity "Scanning Directories" -Status "Progress: $progressCounter of $totalItems" -PercentComplete $progressPercentage
+
+    # Get all files in the directory, including compressed files
+    $files = Get-ChildItem $directory.FullName -File -Recurse
+
+    # Filter potentially malicious files
+    $maliciousFiles = $files | Where-Object {
+        $maliciousExtensions -contains $_.Extension
+    }
+
+    # Add malicious files to the list
+    foreach ($maliciousFile in $maliciousFiles) {
+        $maliciousFilesList += [PSCustomObject]@{
+            'Name' = $maliciousFile.Name
+            'Size (MB)' = [math]::Round($maliciousFile.Length / 1MB, 2)
+            'LastWriteTime' = $maliciousFile.LastWriteTime
+            'FullPath' = $maliciousFile.FullName
+        }
+    }
+}
+
+# Remove progress bar
+Write-Progress -Completed
+
+# Display the results in a table
+if ($maliciousFilesList.Count -gt 0) {
+    Write-Host "Suspicious files detected:"
+    $maliciousFilesList | Format-Table -AutoSize
+} else {
+    Write-Host "No suspicious files detected."
+}
